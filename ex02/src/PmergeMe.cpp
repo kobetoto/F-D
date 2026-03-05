@@ -12,38 +12,9 @@
 
 #include "PmergeMe.hpp"
 
-void error(const std::string &str){ throw(std::runtime_error(str)); }
+void    error(const std::string &str){ throw(std::runtime_error(str)); }
 
-bool bsr_r(std::vector<int> &arr, int to_find, int low, int high){
-  
-  if(low > high)
-    return (false);
-  
-  int mid = low + (high - low) /2;
-
-  if(arr[mid] == to_find)
-    return (true);
-
-  if(to_find < arr[mid])
-    return (bsr_r(arr, to_find, 0, mid-1));
-  
-  return (bsr_r(arr, to_find, mid+1, high));
-}
-
-bool bsr(std::vector<int> &arr, int to_find){
-  return (bsr_r(arr, to_find, 0, static_cast<int>(arr.size())));
-}
-
-void       print_vp( std::vector<std::pair< int, int> > vect_p){
-
-    std::cout << "===VECTOR_PAIR===\n";
-    for(std::vector<std::pair< int, int> >::iterator it = vect_p.begin(); it != vect_p.end(); ++it)
-        std::cout << "it->first:: " << it->first << "   ||   it->second:: " << it->second << '\n';
-    std::cout << "=================\n";
-}
-
-
-void        print_v(std::vector<int> v){
+void    print_v(std::vector<int> &v){
     std::cout << "=================\n";
     std::cout << "======VECTOR=====\n";
     for(std::vector<int>::iterator it = v.begin(); it != v.end(); it++){
@@ -53,19 +24,10 @@ void        print_v(std::vector<int> v){
         // it--;
     } 
     std::cout << "=================\n";
-        return;
+    return;
 }
 
-void        print_arg(char **ac){
-    int i = 1;
-    while (ac[i]){
-        std::cout << "ac[" << i << "]:: " << ac[i] << '\n';
-        i++;
-    }
-        return;
-}
-
-int    check_input(const char *str){
+int     check_input(const char *str){
 	if (!str || *str == '\0')
 		error("Wrong input");
 
@@ -87,60 +49,113 @@ void    input_to_vector(int ac, char **argv, std::vector<int> &s){
 	}
 }
 
-void pairing(const std::vector<int> &s_main,
-             std::vector< std::pair< int, int> > &s_pair,
-             bool &has_orphan,
-             int &orphan)
+
+void    pairing(const std::vector<int> &input_v,
+                        std::vector<PairNode> &pairs_v,
+                        bool &has_orphan,
+                        int &orphan)
 {
-    s_pair.clear();
+    pairs_v.clear();
     has_orphan = false;
+    orphan = 0;
 
-    std::vector<int>::const_iterator it = s_main.begin();
-    while (it != s_main.end())
+    size_t i = 0;
+    size_t id = 0;
+    while (i < input_v.size())
     {
-        int a = *it;
-        ++it;
+        int a = input_v[i++];
+        if (i >= input_v.size()){
+            has_orphan = true; 
+            orphan = a;
+            break;
+        }
+        int b = input_v[i++];
 
-        if (it == s_main.end()) {
+        PairNode p;
+        p.id = id++;
+        if (a <= b) {
+            p.looser = a; 
+            p.winner = b;
+        }
+        else{ 
+            p.looser = b;
+            p.winner = a;
+        }
+        pairs_v.push_back(p);
+    }
+}
+
+void    build_winners_v(const std::vector<PairNode> &pairs_v,
+                          std::vector<PairNode> &winners_v)
+{
+    winners_v.clear();
+    winners_v.reserve(pairs_v.size());
+    for (size_t i = 0; i < pairs_v.size(); ++i)
+        winners_v.push_back(pairs_v[i]); //
+}
+
+
+std::vector<PairNode>   fj_sort_winners(const std::vector<PairNode> &pairs_v, size_t total_ids)
+{
+    if (pairs_v.size() <= 1)
+        return pairs_v;
+
+    std::vector<PairNode> winners;
+    winners.reserve(pairs_v.size() / 2);
+
+    std::vector<PairNode>   pendById(total_ids);
+    std::vector<char>       havePend(total_ids, 0); //checkSecurity
+
+    //orphan on this level?
+    bool has_orphan = false;
+    PairNode orphan;
+
+    size_t i = 0;
+    while (i < pairs_v.size())
+    {
+        PairNode a = pairs_v[i++];
+        if (i >= pairs_v.size())
+        {
             has_orphan = true;
             orphan = a;
             break;
         }
-
-        int b = *it;
-        ++it;
-        if (a <= b) 
-      		s_pair.push_back(std::make_pair(a, b));
-        else
-			s_pair.push_back(std::make_pair(b, a));
+        PairNode b = pairs_v[i++];
+        
+        PairNode win;
+        PairNode los;
+        // match sur high
+        if (a.winner <= b.winner){
+            win = b;
+            los = a;
+        }
+        else{
+           win = a;
+           los = b;
+        }         
+        winners.push_back(win);
+        pendById[win.id] = los;
+        havePend[win.id] = 1;
     }
-}
+
+    //recurssion !
+    std::vector<PairNode> W = fj_sort_winners(winners, total_ids);
 
 
-void update_seq(std::vector<int> &s, std::vector<std::pair<int,int> > &s_p){
-  s.clear();
-  for(size_t i = 0; i < s_p.size(); i++)
-    s.push_back(s_p[i].second);
-}
+    //unwinding !
+    std::vector<PairNode> S = W;
+    PairNode smallWinner = W[0];
 
-void lets_cook(std::vector<int> &s_main,
-             std::vector< std::pair< int, int> > &s_pair,
-             bool &has_orphan,
-             int &orphan)
-{
-    /*base case*/
-    if(s_main.size() == 1)
-        return;
+    if(!havePend[smallWinner.id])
+        error("missing pend");
 
-    print_v(s_main);
-    print_vp(s_pair);
+    PairNode firstLooser = pendById[smallWinner.id];
+    S.insert(S.begin(), firstLooser);
 
-    /* 1.PAIRING */
-    has_orphan  = false;
-    orphan      = 0;
-    pairing(s_main, s_pair, has_orphan, orphan);
-    update_seq(s_main, s_pair);   
-    
-    /* 2. + 3. ~REC~ */
-    lets_cook(s_main, s_pair, has_orphan, orphan);
+    // pour l’instant on ne réinsère pas les perdants, on retourne juste W
+    // (orphans ignoré ici, car c’est une version debug)
+    (void)has_orphan;
+    (void)orphan;
+
+    return (S);
 }
