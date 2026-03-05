@@ -19,19 +19,21 @@
 #include <vector>
 #include <climits>
 
+struct PairNode {
+  int winner;
+  int looser;
+  size_t id;
+};
 
 int     check_input(const char *str);
 void    error(const std::string &str);
 void    input_to_vector(int ac, char **argv, std::vector< int > &v);
-void    pairing(const std::vector< int > &v_main, 
-                std::vector< std::pair< int, int> > &v_pair,
-                bool &has_orphan,
-                int &orphan);
-void update_seq(std::vector<int> &s, std::vector<std::pair<int,int> > &s_p);
-void lets_cook(std::vector<int> &s_main,
-             std::vector< std::pair< int, int> > &s_pair,
-             bool &has_orphan,
-             int &orphan);
-void       print_vp( std::vector<std::pair< int, int> > vect_p);
-void        print_v(std::vector<int> v);
-void        print_arg(char **ac);
+void    print_v(std::vector<int> &v);
+void    pairing(const std::vector<int> &input_v,
+                        std::vector<PairNode> &pairs_v,
+                        bool &has_orphan,
+                        int &orphan);
+void    build_winners_v(const std::vector<PairNode> &pairs_v,
+                          std::vector<PairNode> &winners_v);
+std::vector<PairNode>   fj_sort_winners(const std::vector<PairNode> &pairs_v, size_t total_ids);
+
