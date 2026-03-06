@@ -12,6 +12,11 @@
 
 #include "PmergeMe.hpp"
 
+
+/*
+ *  UTILS
+ */
+
 void    error(const std::string &str){ throw(std::runtime_error(str)); }
 
 void    print_v(std::vector<int> &v){
@@ -26,6 +31,10 @@ void    print_v(std::vector<int> &v){
     std::cout << "=================\n";
     return;
 }
+
+/*
+ *  PARSING
+ */
 
 int     check_input(const char *str){
 	if (!str || *str == '\0')
@@ -49,11 +58,48 @@ void    input_to_vector(int ac, char **argv, std::vector<int> &s){
 	}
 }
 
+/*
+ *  BINARY SEARCH
+ */
+
+//binarySearch recurssion
+size_t bsr_r(const std::vector<PairNode> &arr, int posToFind, size_t low, size_t high){
+    if(low >= high)
+        return low;
+
+    size_t mid = low + (high - low) / 2;
+
+    if(posToFind <= arr[mid].winner)
+        return bsr_r(arr, posToFind, low, mid);
+    return bsr_r(arr, posToFind, mid+1, high);
+}
+
+//binarySearch:: return [position] (orphan)
+size_t  bsr(const std::vector<PairNode> &arr, int posToFind){
+    return (bsr_r(arr, posToFind, 0, arr.size()));
+}
+
+//for opti insertion return [position] (looser/pend)
+size_t bsr_prefix(const std::vector<PairNode> &arr, int posToFind, size_t high){
+    if(high > arr.size())
+        high = arr.size();
+    return (bsr_r(arr, posToFind, 0, high));
+}
+
+//Maj index table to replicate S
+void    rebuild_posById(const std::vector<PairNode> &S, std::vector<size_t> &posById){
+    for (size_t i = 0; i < S.size(); ++i)
+        posById[S[i].id] = i;
+}
+
+/*
+ *PAIRING
+ */
 
 void    pairing(const std::vector<int> &input_v,
-                        std::vector<PairNode> &pairs_v,
-                        bool &has_orphan,
-                        int &orphan)
+        std::vector<PairNode> &pairs_v,
+        bool &has_orphan,
+        int &orphan)
 {
     pairs_v.clear();
     has_orphan = false;
@@ -86,14 +132,49 @@ void    pairing(const std::vector<int> &input_v,
 }
 
 void    build_winners_v(const std::vector<PairNode> &pairs_v,
-                          std::vector<PairNode> &winners_v)
+        std::vector<PairNode> &winners_v)
 {
     winners_v.clear();
     winners_v.reserve(pairs_v.size());
     for (size_t i = 0; i < pairs_v.size(); ++i)
-        winners_v.push_back(pairs_v[i]); //
+        winners_v.push_back(pairs_v[i]); 
 }
 
+/*
+ * JACOBSTHAL
+ */
+
+const long g_jacob[] = {0,1,1,3,5,11,21,43,85,171,341,683,1365,2731,5461,10923,21845};
+const size_t g_jacob_sz = sizeof(g_jacob)/sizeof(g_jacob[0]);
+
+std::vector<size_t> jacob_order(size_t count_y)
+{
+    std::vector<size_t> order;
+    order.reserve(count_y);
+
+    size_t y = 3;
+    for (size_t j = 3; j < g_jacob_sz && count_y > 0; ++j)
+    {
+        long diff = g_jacob[j] - g_jacob[j - 1];
+        if (diff <= 0) continue;
+
+        size_t group = static_cast<size_t>(diff);
+        size_t take = (group < count_y) ? group : count_y;
+
+        for (size_t k = 0; k < take; ++k)
+            order.push_back(y + (take - 1 - k));
+
+        y += take;
+        count_y -= take;
+    }
+    if (count_y > 0)
+        error("Internal error: Jacob table too short");
+    return order;
+}
+
+/*
+ *  FJ ENGINE
+ */
 
 std::vector<PairNode>   fj_sort_winners(const std::vector<PairNode> &pairs_v, size_t total_ids)
 {
@@ -121,7 +202,7 @@ std::vector<PairNode>   fj_sort_winners(const std::vector<PairNode> &pairs_v, si
             break;
         }
         PairNode b = pairs_v[i++];
-        
+
         PairNode win;
         PairNode los;
         // match sur high
@@ -130,8 +211,8 @@ std::vector<PairNode>   fj_sort_winners(const std::vector<PairNode> &pairs_v, si
             los = a;
         }
         else{
-           win = a;
-           los = b;
+            win = a;
+            los = b;
         }         
         winners.push_back(win);
         pendById[win.id] = los;
@@ -142,20 +223,60 @@ std::vector<PairNode>   fj_sort_winners(const std::vector<PairNode> &pairs_v, si
     std::vector<PairNode> W = fj_sort_winners(winners, total_ids);
 
 
-    //unwinding !
+    //unwinding winners sort!
     std::vector<PairNode> S = W;
-    PairNode smallWinner = W[0];
 
+    //pos by id (bornes)
+    std::vector<size_t> posById(total_ids, 0);
+    rebuild_posById(S, posById);
+
+    //insert loos of the smallest winner
+    PairNode smallWinner = W[0];
     if(!havePend[smallWinner.id])
         error("missing pend");
 
     PairNode firstLooser = pendById[smallWinner.id];
     S.insert(S.begin(), firstLooser);
+    rebuild_posById(S, posById);
 
-    // pour l’instant on ne réinsère pas les perdants, on retourne juste W
-    // (orphans ignoré ici, car c’est une version debug)
-    (void)has_orphan;
-    (void)orphan;
+    //insert looser of W[1...] + orphan
+    size_t m        = W.size();
+    size_t count_y  = 0;
+    if (m > 1)
+        count_y = m-1;
+    if(has_orphan)
+        count_y++;
+
+    std::vector<size_t> order =  jacob_order(count_y);
+
+    for(size_t k = 0; k < order.size(); k++){
+
+        size_t y_id = order[k];
+
+        if(has_orphan && y_id == (m + 2)){
+            size_t pos = bsr(S, orphan.winner);
+            S.insert(S.begin() + pos, orphan);
+            rebuild_posById(S, posById);
+        }
+        else{
+            //y3 -> W[1], y4 -> W[2]
+            size_t w_i = y_id-2;
+            if(w_i >= m)
+                error("bad Y index");
+
+            PairNode wnode = W[w_i];
+            if(!havePend[wnode.id])
+                error("missing pend");
+
+            PairNode lnode = pendById[wnode.id];
+
+            size_t bound    = posById[wnode.id]; // pos winner in S
+            size_t pos      = bsr_prefix(S, lnode.winner, bound); // insert [0...bound]
+
+            S.insert(S.begin() + pos, lnode);
+            rebuild_posById(S, posById);
+        }
+    }
 
     return (S);
 }
