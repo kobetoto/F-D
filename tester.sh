@@ -1,3 +1,5 @@
+#By Clara Bordeau
+
 #!/bin/bash
 
 #v1
