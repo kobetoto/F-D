@@ -1,4 +1,4 @@
-//From emuminov FordJohnson Alogirthm: Humain Explenation & Visualisation
+//From emuminov FordJohnson Alogirthm: Humain Explenation & Visualisation by Cbordeau
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
