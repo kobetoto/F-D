@@ -51,3 +51,49 @@ utile pour retrouver la borne du winner en O(1) sans rescanner `S`.
 
 ```bash
 make
+```
+
+##Nettoyage :
+
+```bash
+make fclean
+make re
+Usage
+./PmergeMe 3 5 9 7 4
+```
+
+##Exemple de sortie attendue :
+
+Before: 3 5 9 7 4
+After:  3 4 5 7 9
+Time to process a range of 5 elements with std::vector : ...
+Time to process a range of 5 elements with std::deque : ...
+
+##Test 3000 éléments (Linux) :
+```bash
+./PmergeMe `shuf -i 1-100000 -n 3000 | tr "\n" " "`
+```
+
+##Contraintes / Erreurs
+
+-Entrées : entiers positifs uniquement
+
+-En cas d’erreur : affichage Error sur la sortie d’erreur et code de retour non nul
+(Doublons : gestion laissée à discrétion. Selon ton choix : autoriser ou refuser.)
+
+
+##Mesure des comparaisons (optionnel)
+
+Le projet contient un compteur g_comp (si activé) pour compter les comparaisons de tri
+(comparaisons de valeurs dans pairing + binary search).
+Utile pour comparer ton comportement à la borne théorique du pire cas.
+
+##Fichiers
+-main.cpp
+-PmergeMe.hpp
+-PmergeMe.cpp
+-Makefile
+
+## Remerciements / Peering
+
+Principales sources de peering : cbordeau et akryfa
