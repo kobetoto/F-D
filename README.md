@@ -76,9 +76,9 @@ Time to process a range of 5 elements with std::deque : ...
 
 ## Contraintes / Erreurs
 
--Entrées : entiers positifs uniquement
+- Entrées : entiers positifs uniquement
 
--En cas d’erreur : affichage Error sur la sortie d’erreur et code de retour non nul
+- En cas d’erreur : affichage Error sur la sortie d’erreur et code de retour non nul
 (Doublons : gestion laissée à discrétion. Selon ton choix : autoriser ou refuser.)
 
 
@@ -89,10 +89,10 @@ Le projet contient un compteur g_comp (si activé) pour compter les comparaisons
 Utile pour comparer ton comportement à la borne théorique du pire cas.
 
 ##Fichiers
--main.cpp
--PmergeMe.hpp
--PmergeMe.cpp
--Makefile
+- main.cpp
+- PmergeMe.hpp
+- PmergeMe.cpp
+- Makefile
 
 ## Remerciements / Peering
 
