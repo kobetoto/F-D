@@ -53,7 +53,7 @@ utile pour retrouver la borne du winner en O(1) sans rescanner `S`.
 make
 ```
 
-##Nettoyage :
+## Nettoyage :
 
 ```bash
 make fclean
@@ -62,7 +62,7 @@ Usage
 ./PmergeMe 3 5 9 7 4
 ```
 
-##Exemple de sortie attendue :
+## Exemple de sortie attendue :
 
 Before: 3 5 9 7 4
 After:  3 4 5 7 9
@@ -74,7 +74,7 @@ Time to process a range of 5 elements with std::deque : ...
 ./PmergeMe `shuf -i 1-100000 -n 3000 | tr "\n" " "`
 ```
 
-##Contraintes / Erreurs
+## Contraintes / Erreurs
 
 -Entrées : entiers positifs uniquement
 
