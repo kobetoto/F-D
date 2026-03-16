@@ -96,4 +96,4 @@ Utile pour comparer ton comportement à la borne théorique du pire cas.
 
 ## Remerciements / Peering
 
-Principales sources de peering : cbordeau et akryfa
+Principales sources de peering : cbordeau et aykrifa
